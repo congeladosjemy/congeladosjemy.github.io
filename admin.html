@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Panel de administración</title>
+  <link rel="stylesheet" href="estilos.css">
+</head>
+<body class="admin">
+  <!-- Login -->
+  <main id="vista-login" class="login no-imprimir" hidden>
+    <form id="form-login" class="formulario una-col">
+      <h2>Panel de administración</h2>
+      <label>Email<input name="email" type="email" required autocomplete="username"></label>
+      <label>Contraseña<input name="password" type="password" required autocomplete="current-password"></label>
+      <p id="error-login" class="error" hidden></p>
+      <button class="btn primario" type="submit">Entrar</button>
+    </form>
+  </main>
+
+  <!-- Panel -->
+  <div id="vista-panel" class="no-imprimir" hidden>
+    <header class="barra">
+      <h1 id="titulo">Panel</h1>
+      <button id="btn-salir" class="btn-carrito">Salir</button>
+    </header>
+    <nav class="pestanas">
+      <button data-tab="resumen" class="activa">📊 Resumen</button>
+      <button data-tab="pedidos">🧾 Pedidos <span id="badge-nuevos" class="badge" hidden></span></button>
+      <button data-tab="stock">📦 Stock</button>
+      <button data-tab="clientes">👥 Clientes</button>
+    </nav>
+
+    <!-- RESUMEN -->
+    <main id="tab-resumen" class="tab">
+      <div id="tarjetas" class="tarjetas-resumen"></div>
+      <div class="dos-col">
+        <section class="caja"><h3>⚠️ Stock bajo</h3><div id="stock-bajo"></div></section>
+        <section class="caja"><h3>🏆 Más vendidos (últimos 30 días)</h3><div id="mas-vendidos"></div></section>
+      </div>
+    </main>
+
+    <!-- PEDIDOS -->
+    <main id="tab-pedidos" class="tab" hidden>
+      <div class="barra-filtros">
+        <select id="f-estado">
+          <option value="pendientes">Pendientes</option>
+          <option value="">Todos</option>
+          <option value="nuevo">Nuevos</option>
+          <option value="preparando">Preparando</option>
+          <option value="enviado">En camino / listo</option>
+          <option value="entregado">Entregados</option>
+          <option value="cancelado">Cancelados</option>
+        </select>
+        <label>Desde <input id="f-desde" type="date"></label>
+        <label>Hasta <input id="f-hasta" type="date"></label>
+        <input id="f-buscar" type="search" placeholder="Buscar nombre, teléfono, dirección o N°">
+        <button id="btn-imprimir-lista" class="btn">🖨️ Imprimir todos</button>
+      </div>
+      <p id="filtro-cliente" class="aviso-filtro" hidden></p>
+      <div id="lista-pedidos"></div>
+    </main>
+
+    <!-- STOCK -->
+    <main id="tab-stock" class="tab" hidden>
+      <div class="barra-filtros">
+        <input id="s-buscar" type="search" placeholder="Buscar producto">
+        <label class="check"><input id="s-bajo" type="checkbox"> Sólo stock bajo</label>
+        <button id="btn-nuevo-producto" class="btn primario">+ Nuevo producto</button>
+        <button id="btn-movimientos" class="btn">📋 Movimientos</button>
+      </div>
+      <div class="tabla-scroll"><table class="tabla" id="tabla-stock"></table></div>
+    </main>
+
+    <!-- CLIENTES -->
+    <main id="tab-clientes" class="tab" hidden>
+      <div class="barra-filtros">
+        <input id="c-buscar" type="search" placeholder="Buscar por nombre o teléfono">
+      </div>
+      <div class="tabla-scroll"><table class="tabla" id="tabla-clientes"></table></div>
+    </main>
+  </div>
+
+  <!-- Detalle de pedido -->
+  <dialog id="dlg-pedido" class="dialogo ancho-grande">
+    <div class="dlg-cab"><h2 id="dlg-pedido-titulo">Pedido</h2><button class="x" data-cerrar>✕</button></div>
+    <div class="acciones">
+      <label>Estado <select id="dlg-estado"></select></label>
+      <button id="dlg-imprimir" class="btn">🖨️ Imprimir</button>
+      <label class="check"><input id="dlg-duplicado" type="checkbox"> Con duplicado</label>
+      <a id="dlg-whatsapp" class="btn" target="_blank" rel="noopener">📲 WhatsApp al cliente</a>
+    </div>
+    <label class="nota">Nota interna (no la ve el cliente)
+      <textarea id="dlg-nota" rows="2"></textarea>
+    </label>
+    <p id="dlg-error" class="error" hidden></p>
+    <div id="dlg-remito"></div>
+  </dialog>
+
+  <!-- Producto -->
+  <dialog id="dlg-producto" class="dialogo">
+    <form id="form-producto" method="dialog" class="formulario">
+      <div class="dlg-cab ancho"><h2 id="dlg-producto-titulo">Producto</h2><button class="x" type="button" data-cerrar>✕</button></div>
+      <input type="hidden" name="id">
+      <label class="ancho">Nombre *<input name="nombre" required></label>
+      <label>Categoría<input name="categoria" list="lista-categorias"></label>
+      <label>Precio *<input name="precio" type="number" min="0" step="1" required></label>
+      <label id="campo-stock-inicial">Stock inicial<input name="stock" type="number" step="1" value="0"></label>
+      <label>Avisar con stock menor o igual a<input name="stock_minimo" type="number" min="0" step="1" value="5"></label>
+      <label>Emoji<input name="emoji" maxlength="4" placeholder="❄️"></label>
+      <label class="ancho">Foto (URL, opcional)<input name="imagen" type="url" placeholder="https://…"></label>
+      <label class="check ancho"><input name="activo" type="checkbox" checked> Visible en la tienda</label>
+      <p class="error ancho" hidden></p>
+      <button class="btn primario ancho" type="submit">Guardar</button>
+    </form>
+    <datalist id="lista-categorias"></datalist>
+  </dialog>
+
+  <!-- Movimiento de stock -->
+  <dialog id="dlg-mover" class="dialogo">
+    <form id="form-mover" method="dialog" class="formulario una-col">
+      <div class="dlg-cab"><h2>Mover stock</h2><button class="x" type="button" data-cerrar>✕</button></div>
+      <p id="mover-producto"></p>
+      <input type="hidden" name="id">
+      <label>Tipo
+        <select name="tipo">
+          <option value="ingreso">Ingreso de mercadería (+)</option>
+          <option value="merma">Merma / rotura / vencido (−)</option>
+          <option value="ajuste">Ajuste por conteo (dejar en un valor exacto)</option>
+        </select>
+      </label>
+      <label><span id="mover-etiqueta">Cantidad</span><input name="cantidad" type="number" min="0" step="1" required></label>
+      <label>Detalle (opcional)<input name="detalle" placeholder="Ej.: proveedor, remito N°…"></label>
+      <p class="error" hidden></p>
+      <button class="btn primario" type="submit">Guardar</button>
+    </form>
+  </dialog>
+
+  <!-- Movimientos -->
+  <dialog id="dlg-movimientos" class="dialogo ancho-grande">
+    <div class="dlg-cab"><h2 id="mov-titulo">Movimientos de stock</h2><button class="x" data-cerrar>✕</button></div>
+    <div class="tabla-scroll"><table class="tabla" id="tabla-movimientos"></table></div>
+  </dialog>
+
+  <div id="zona-impresion"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="comun.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>

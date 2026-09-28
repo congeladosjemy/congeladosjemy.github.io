@@ -93,11 +93,94 @@ h1, h2, h3 { margin: 0; }
   .remito-cliente { grid-template-columns: 1fr; }
 }
 
-/* ===== IMPRESIÓN: sólo se imprime el remito ===== */
+/* Tienda: extras */
+.tarjeta.agotado { opacity: .55; }
+.quedan { margin: 0; color: #c2410c; font-size: .85rem; font-weight: 600; }
+.cantidad button:disabled { opacity: .35; cursor: not-allowed; }
+.resumen-pedido { background: var(--fondo); border-radius: 8px; padding: 12px; }
+.resumen-pedido h3 { font-size: 1rem; margin-bottom: 6px; }
+.fila-resumen { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; }
+.fila-resumen.total { border-top: 1px solid var(--borde); margin-top: 6px; padding-top: 8px; font-weight: 700; font-size: 1.1rem; }
+.error { color: #b91c1c; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 10px; margin: 0; }
+.confirmado { text-align: center; background: #fff; border: 1px solid var(--borde); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+.confirmado .acciones { justify-content: center; margin: 12px 0 0; }
+a.btn { text-decoration: none; display: inline-block; }
+
+/* ===== PANEL ===== */
+.login { min-height: 100vh; display: grid; place-items: center; }
+.login .formulario { width: min(380px, 100%); }
+.una-col { grid-template-columns: 1fr !important; }
+.pestanas { display: flex; gap: 4px; overflow-x: auto; background: #fff; border-bottom: 1px solid var(--borde); padding: 0 12px; position: sticky; top: 0; z-index: 4; }
+body.admin .barra { position: static; }
+.pestanas button { border: 0; background: none; padding: 14px 14px 12px; font-size: 1rem; cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; color: var(--gris); }
+.pestanas button.activa { color: var(--azul); border-bottom-color: var(--azul); font-weight: 700; }
+.badge { background: #dc2626; color: #fff; border-radius: 999px; padding: 1px 7px; font-size: .8rem; }
+body.admin main { max-width: 1200px; }
+.tarjetas-resumen { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.kpi { background: #fff; border: 1px solid var(--borde); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 6px; }
+.kpi span { color: var(--gris); font-size: .9rem; }
+.kpi strong { font-size: 1.6rem; }
+.kpi.clic { cursor: pointer; border-color: var(--azul); }
+.dos-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 700px) { .dos-col { grid-template-columns: 1fr; } }
+.caja { background: #fff; border: 1px solid var(--borde); border-radius: 12px; padding: 16px; }
+.caja h3 { font-size: 1rem; margin-bottom: 8px; }
+.lista { list-style: none; margin: 0; padding: 0; }
+.lista li { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--borde); }
+.lista li:last-child { border-bottom: 0; }
+.rojo { color: #dc2626; }
+.naranja { color: #c2410c; }
+.verde { color: #15803d; }
+
+.barra-filtros { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
+.barra-filtros input, .barra-filtros select { padding: 9px 10px; border: 1px solid var(--borde); border-radius: 8px; font: inherit; background: #fff; }
+.barra-filtros input[type=search] { flex: 1; min-width: 200px; }
+.barra-filtros label { display: flex; align-items: center; gap: 6px; font-size: .9rem; }
+.check { display: flex !important; flex-direction: row !important; align-items: center; gap: 6px; cursor: pointer; }
+.aviso-filtro { background: var(--azul-claro); padding: 10px 12px; border-radius: 8px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.subtotal-lista { color: var(--gris); margin: 0 0 8px; }
+
+.tabla-scroll { overflow-x: auto; background: #fff; border: 1px solid var(--borde); border-radius: 12px; }
+.tabla { width: 100%; border-collapse: collapse; font-size: .95rem; }
+.tabla caption { text-align: left; padding: 10px 12px; color: var(--gris); caption-side: top; }
+.tabla th, .tabla td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--borde); vertical-align: middle; }
+.tabla th { background: var(--fondo); font-size: .85rem; color: var(--gris); white-space: nowrap; }
+.tabla .num { text-align: right; white-space: nowrap; }
+.tabla tr.clic { cursor: pointer; }
+.tabla tr.clic:hover { background: var(--azul-claro); }
+.tabla tr.inactivo td { color: var(--gris); }
+.tabla small { color: var(--gris); }
+.botones { white-space: nowrap; text-align: right; }
+.btn.chico { padding: 5px 10px; font-size: .85rem; }
+
+.estado { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .8rem; font-weight: 700; white-space: nowrap; }
+.estado-nuevo { background: #dbeafe; color: #1d4ed8; }
+.estado-preparando { background: #fef3c7; color: #92400e; }
+.estado-enviado { background: #ede9fe; color: #6d28d9; }
+.estado-entregado { background: #dcfce7; color: #15803d; }
+.estado-cancelado { background: #f3f4f6; color: #6b7280; text-decoration: line-through; }
+
+.dialogo { border: 0; border-radius: 14px; padding: 16px; width: min(560px, calc(100% - 24px)); max-height: calc(100vh - 32px); box-shadow: 0 10px 40px rgba(0,0,0,.25); }
+.dialogo.ancho-grande { width: min(900px, calc(100% - 24px)); }
+.dialogo::backdrop { background: rgba(0,0,0,.4); }
+.dialogo .formulario { border: 0; padding: 0; margin: 0; }
+.dlg-cab { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.dialogo .acciones label { display: flex; align-items: center; gap: 6px; }
+.dialogo .acciones select { padding: 8px; border-radius: 8px; border: 1px solid var(--borde); font: inherit; }
+.nota { display: flex; flex-direction: column; gap: 4px; font-size: .9rem; font-weight: 600; margin-bottom: 12px; }
+.nota textarea { padding: 8px; border: 1px solid var(--borde); border-radius: 8px; font: inherit; font-weight: 400; }
+
+#zona-impresion { display: none; }
+
+/* ===== IMPRESIÓN: sólo se imprimen los remitos ===== */
 @media print {
   @page { size: A4; margin: 12mm; }
   body { background: #fff; }
-  .barra, .carrito, .fondo, .gracias, .no-imprimir, #vista-catalogo, #vista-datos { display: none !important; }
+  .no-imprimir, dialog { display: none !important; }
+  body.imprimiendo > *:not(#zona-impresion) { display: none !important; }
+  body.imprimiendo #zona-impresion { display: block; }
+  .hoja { break-after: page; }
+  .hoja:last-child { break-after: auto; }
   main { padding: 0; max-width: none; }
   .remito { border-width: 1px; max-width: none; break-inside: avoid; }
   .remito-tabla th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }

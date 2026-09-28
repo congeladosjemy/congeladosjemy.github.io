@@ -3,26 +3,26 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Congelados JEMY · Hacé tu pedido</title>
+  <title>Hacé tu pedido</title>
   <link rel="stylesheet" href="estilos.css">
 </head>
 <body>
-  <header class="barra">
-    <h1 id="titulo">Congelados JEMY</h1>
+  <header class="barra no-imprimir">
+    <h1 id="titulo">Congelados</h1>
     <button id="btn-carrito" class="btn-carrito">🛒 Carrito <span id="contador">0</span></button>
   </header>
 
   <!-- PASO 1: catálogo -->
-  <main id="vista-catalogo">
+  <main id="vista-catalogo" class="no-imprimir">
     <div class="filtros">
       <input id="buscar" type="search" placeholder="Buscar producto…">
       <div id="categorias" class="chips"></div>
     </div>
-    <div id="catalogo" class="grilla"></div>
+    <div id="catalogo" class="grilla"><p class="vacio">Cargando productos…</p></div>
   </main>
 
   <!-- Carrito lateral -->
-  <aside id="carrito" class="carrito" aria-hidden="true">
+  <aside id="carrito" class="carrito no-imprimir" aria-hidden="true">
     <div class="carrito-cab">
       <h2>Tu pedido</h2>
       <button id="cerrar-carrito" class="x" aria-label="Cerrar">✕</button>
@@ -31,24 +31,24 @@
     <div class="carrito-total">Total: <strong id="total-carrito">$ 0</strong></div>
     <button id="btn-continuar" class="btn primario" disabled>Continuar con mis datos</button>
   </aside>
-  <div id="fondo" class="fondo"></div>
+  <div id="fondo" class="fondo no-imprimir"></div>
 
   <!-- PASO 2: datos del cliente -->
-  <main id="vista-datos" hidden>
+  <main id="vista-datos" class="no-imprimir" hidden>
     <button class="volver" data-ir="catalogo">← Seguir comprando</button>
     <h2>Completá tus datos</h2>
     <form id="form-datos" class="formulario">
-      <label>Nombre y apellido *<input name="nombre" required autocomplete="name"></label>
-      <label>Teléfono *<input name="telefono" type="tel" required autocomplete="tel"></label>
+      <label>Nombre y apellido *<input name="nombre" required maxlength="120" autocomplete="name"></label>
+      <label>Teléfono *<input name="telefono" type="tel" required maxlength="40" autocomplete="tel"></label>
       <label>Forma de entrega *
         <select name="entrega">
           <option value="envio">Envío a domicilio</option>
           <option value="retiro">Retiro en el local</option>
         </select>
       </label>
-      <label class="dir">Dirección *<input name="direccion" required autocomplete="street-address" placeholder="Calle, número, piso/depto"></label>
-      <label class="dir">Localidad<input name="localidad" autocomplete="address-level2"></label>
-      <label>Fecha de entrega *<input name="fechaEntrega" type="date" required></label>
+      <label class="dir">Dirección *<input name="direccion" required maxlength="200" autocomplete="street-address" placeholder="Calle, número, piso/depto"></label>
+      <label class="dir">Localidad<input name="localidad" maxlength="100" autocomplete="address-level2"></label>
+      <label>Fecha de entrega *<input name="fecha_entrega" type="date" required></label>
       <label>Horario preferido
         <select name="horario">
           <option value="">Indistinto</option>
@@ -64,29 +64,35 @@
           <option>Mercado Pago</option>
         </select>
       </label>
-      <label class="ancho">Observaciones<textarea name="observaciones" rows="3" placeholder="Timbre, referencias, aclaraciones…"></textarea></label>
-      <button class="btn primario ancho" type="submit">Ver remito</button>
+      <label class="ancho">Observaciones<textarea name="observaciones" rows="3" maxlength="500" placeholder="Timbre, referencias, aclaraciones…"></textarea></label>
+
+      <div class="ancho resumen-pedido">
+        <h3>Resumen</h3>
+        <div id="resumen-items"></div>
+      </div>
+      <p id="error-pedido" class="error ancho" hidden></p>
+      <button id="btn-confirmar" class="btn primario ancho" type="submit">Confirmar pedido</button>
     </form>
   </main>
 
-  <!-- PASO 3: remito -->
+  <!-- PASO 3: pedido confirmado -->
   <main id="vista-remito" hidden>
-    <div class="acciones no-imprimir">
-      <button class="volver" data-ir="datos">← Modificar datos</button>
-      <button id="btn-imprimir" class="btn">🖨️ Imprimir / Guardar PDF</button>
-      <button id="btn-enviar" class="btn primario">📲 Enviar pedido por WhatsApp</button>
+    <div class="confirmado no-imprimir">
+      <h2>✅ ¡Pedido recibido!</h2>
+      <p>Tu número de pedido es <strong id="num-confirmado"></strong>. Te vamos a contactar para confirmar la entrega.</p>
+      <div class="acciones">
+        <button id="btn-imprimir" class="btn">🖨️ Imprimir / Guardar PDF</button>
+        <a id="btn-whatsapp" class="btn primario" target="_blank" rel="noopener">📲 Avisar por WhatsApp</a>
+        <button class="btn" id="nuevo-pedido">Hacer otro pedido</button>
+      </div>
     </div>
     <div id="remito"></div>
-    <p class="aviso no-imprimir">Al tocar <strong>Enviar pedido</strong> se abre WhatsApp con tu pedido listo para mandarnos.</p>
   </main>
 
-  <div id="gracias" class="gracias" hidden>
-    <h2>¡Gracias por tu pedido!</h2>
-    <p>Si no se abrió WhatsApp, volvé a tocar el botón. Te vamos a confirmar a la brevedad.</p>
-    <button class="btn primario" id="nuevo-pedido">Hacer otro pedido</button>
-  </div>
+  <div id="zona-impresion"></div>
 
-  <script src="productos.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
   <script src="comun.js"></script>
   <script src="app.js"></script>
 </body>

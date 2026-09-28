@@ -1,7 +1,8 @@
 // ---------- Estado ----------
+let productos = [];
 let carrito = cargar("carrito", {}); // { idProducto: cantidad }
 let categoria = "Todas";
-let pedidoActual = null;
+let pedidoConfirmado = null;
 
 function cargar(clave, porDefecto) {
   try { return JSON.parse(localStorage.getItem(clave)) ?? porDefecto; } catch { return porDefecto; }
@@ -10,37 +11,60 @@ function guardar(clave, valor) {
   try { localStorage.setItem(clave, JSON.stringify(valor)); } catch {}
 }
 
-const $ = (s) => document.querySelector(s);
-const producto = (id) => PRODUCTOS.find((p) => p.id === id);
+const producto = (id) => productos.find((p) => String(p.id) === String(id));
 
 document.title = NEGOCIO.nombre + " · Hacé tu pedido";
 $("#titulo").textContent = NEGOCIO.nombre;
 
 // ---------- Catálogo ----------
+async function cargarCatalogo() {
+  try {
+    productos = await api("catalogo");
+  } catch (e) {
+    $("#catalogo").innerHTML = `<p class="vacio">No se pudieron cargar los productos. Probá de nuevo en un rato.</p>`;
+    return;
+  }
+  // Se ajusta el carrito guardado a lo que hay disponible hoy
+  for (const id of Object.keys(carrito)) {
+    const p = producto(id);
+    if (!p) delete carrito[id];
+    else carrito[id] = Math.min(carrito[id], p.stock);
+    if (!carrito[id]) delete carrito[id];
+  }
+  guardar("carrito", carrito);
+  pintarCategorias();
+  pintarCatalogo();
+  pintarCarrito();
+}
+
 function pintarCategorias() {
-  const cats = ["Todas", ...new Set(PRODUCTOS.map((p) => p.categoria))];
+  const cats = ["Todas", ...new Set(productos.map((p) => p.categoria))];
   $("#categorias").innerHTML = cats
     .map((c) => `<button class="chip ${c === categoria ? "activa" : ""}" data-cat="${escapar(c)}">${escapar(c)}</button>`)
     .join("");
 }
 
+function controlCantidad(p) {
+  const cant = carrito[p.id] || 0;
+  if (p.stock <= 0) return `<button class="btn" disabled>Sin stock</button>`;
+  if (!cant) return `<button class="btn primario" data-mas="${p.id}">Agregar</button>`;
+  return `<div class="cantidad"><button data-menos="${p.id}">−</button><span>${cant}</span>
+          <button data-mas="${p.id}" ${cant >= p.stock ? "disabled" : ""}>+</button></div>`;
+}
+
 function pintarCatalogo() {
   const q = $("#buscar").value.trim().toLowerCase();
-  const lista = PRODUCTOS.filter(
+  const lista = productos.filter(
     (p) => (categoria === "Todas" || p.categoria === categoria) && p.nombre.toLowerCase().includes(q)
   );
   $("#catalogo").innerHTML = lista.length
-    ? lista.map((p) => {
-        const cant = carrito[p.id] || 0;
-        return `<article class="tarjeta">
+    ? lista.map((p) => `<article class="tarjeta ${p.stock <= 0 ? "agotado" : ""}">
           <div class="foto">${p.imagen ? `<img src="${escapar(p.imagen)}" alt="">` : escapar(p.emoji || "❄️")}</div>
           <h3>${escapar(p.nombre)}</h3>
           <p class="precio">${pesos(p.precio)}</p>
-          ${cant
-            ? `<div class="cantidad"><button data-menos="${p.id}">−</button><span>${cant}</span><button data-mas="${p.id}">+</button></div>`
-            : `<button class="btn primario" data-mas="${p.id}">Agregar</button>`}
-        </article>`;
-      }).join("")
+          ${p.stock > 0 && p.stock <= 5 ? `<p class="quedan">¡Quedan ${p.stock}!</p>` : ""}
+          ${controlCantidad(p)}
+        </article>`).join("")
     : `<p class="vacio">No encontramos productos.</p>`;
 }
 
@@ -51,23 +75,26 @@ function itemsCarrito() {
     .map(([id, cantidad]) => ({ ...producto(id), cantidad }));
 }
 
+const totalCarrito = () => itemsCarrito().reduce((s, it) => s + it.precio * it.cantidad, 0);
+
 function pintarCarrito() {
   const items = itemsCarrito();
-  const total = items.reduce((s, it) => s + it.precio * it.cantidad, 0);
   $("#contador").textContent = items.reduce((s, it) => s + it.cantidad, 0);
-  $("#total-carrito").textContent = pesos(total);
+  $("#total-carrito").textContent = pesos(totalCarrito());
   $("#btn-continuar").disabled = !items.length;
   $("#lista-carrito").innerHTML = items.length
     ? items.map((it) => `<div class="linea">
         <div><strong>${escapar(it.nombre)}</strong><br><small>${pesos(it.precio)} c/u</small></div>
-        <div class="cantidad"><button data-menos="${it.id}">−</button><span>${it.cantidad}</span><button data-mas="${it.id}">+</button></div>
+        ${controlCantidad(it)}
         <div class="subtotal">${pesos(it.precio * it.cantidad)}</div>
       </div>`).join("")
     : `<p class="vacio">Tu carrito está vacío.</p>`;
 }
 
 function cambiar(id, delta) {
-  carrito[id] = Math.max(0, (carrito[id] || 0) + delta);
+  const p = producto(id);
+  if (!p) return;
+  carrito[id] = Math.min(p.stock, Math.max(0, (carrito[id] || 0) + delta));
   if (!carrito[id]) delete carrito[id];
   guardar("carrito", carrito);
   pintarCatalogo();
@@ -83,7 +110,6 @@ function abrirCarrito(abrir) {
 // ---------- Navegación ----------
 function ir(vista) {
   ["catalogo", "datos", "remito"].forEach((v) => ($("#vista-" + v).hidden = v !== vista));
-  $("#gracias").hidden = true;
   abrirCarrito(false);
   window.scrollTo(0, 0);
 }
@@ -93,75 +119,63 @@ const form = $("#form-datos");
 
 function ajustarEntrega() {
   const retiro = form.entrega.value === "retiro";
-  document.querySelectorAll(".dir").forEach((el) => (el.hidden = retiro));
+  $$(".dir").forEach((el) => (el.hidden = retiro));
   form.direccion.required = !retiro;
 }
 
-function precargarDatos() {
+function prepararDatos() {
   const d = cargar("cliente", {});
-  for (const [k, v] of Object.entries(d)) if (form[k] && k !== "fechaEntrega") form[k].value = v;
-  const hoy = new Date();
-  hoy.setMinutes(hoy.getMinutes() - hoy.getTimezoneOffset());
-  form.fechaEntrega.min = hoy.toISOString().slice(0, 10);
+  for (const [k, v] of Object.entries(d)) if (form[k] && k !== "fecha_entrega") form[k].value = v;
+  form.fecha_entrega.min = hoyISO();
   ajustarEntrega();
+  $("#resumen-items").innerHTML =
+    itemsCarrito().map((it) => `<div class="fila-resumen"><span>${it.cantidad} × ${escapar(it.nombre)}</span><span>${pesos(it.precio * it.cantidad)}</span></div>`).join("") +
+    `<div class="fila-resumen total"><span>Total</span><span>${pesos(totalCarrito())}</span></div>`;
+  $("#error-pedido").hidden = true;
 }
 
-function generarNumero() {
-  const d = new Date();
-  const p2 = (n) => String(n).padStart(2, "0");
-  return `${String(d.getFullYear()).slice(2)}${p2(d.getMonth() + 1)}${p2(d.getDate())}-${p2(d.getHours())}${p2(d.getMinutes())}${Math.floor(Math.random() * 90 + 10)}`;
-}
-
-form.addEventListener("submit", (e) => {
+form.addEventListener("submit", async (e) => {
   e.preventDefault();
   const cliente = Object.fromEntries(new FormData(form));
-  if (cliente.entrega === "retiro") { cliente.direccion = "Retira en local"; cliente.localidad = ""; }
+  if (cliente.entrega === "retiro") { cliente.direccion = ""; cliente.localidad = ""; }
   guardar("cliente", cliente);
-  pedidoActual = {
-    numero: generarNumero(),
-    fechaPedido: new Date().toLocaleString("es-AR", { dateStyle: "short", timeStyle: "short" }),
-    cliente,
-    items: itemsCarrito().map(({ nombre, precio, cantidad }) => ({ nombre, precio, cantidad })),
-  };
-  $("#remito").innerHTML = htmlRemito(pedidoActual);
-  ir("remito");
+
+  const boton = $("#btn-confirmar");
+  boton.disabled = true;
+  boton.textContent = "Enviando…";
+  $("#error-pedido").hidden = true;
+  try {
+    pedidoConfirmado = await api("crear_pedido", {
+      p_cliente: cliente,
+      p_items: itemsCarrito().map((it) => ({ producto_id: it.id, cantidad: it.cantidad })),
+    });
+    carrito = {};
+    guardar("carrito", carrito);
+    mostrarConfirmado();
+    cargarCatalogo(); // refresca el stock
+  } catch (err) {
+    $("#error-pedido").textContent = "No se pudo enviar el pedido: " + err.message;
+    $("#error-pedido").hidden = false;
+    cargarCatalogo();
+  } finally {
+    boton.disabled = false;
+    boton.textContent = "Confirmar pedido";
+  }
 });
 
-// ---------- Envío por WhatsApp ----------
-function mensajeWhatsApp(p) {
-  const total = p.items.reduce((s, it) => s + it.precio * it.cantidad, 0);
-  const link = new URL("remito.html", location.href).href + "#" + codificarPedido(p);
-  const c = p.cliente;
-  return [
-    `*NUEVO PEDIDO N° ${p.numero}*`,
-    `Fecha: ${p.fechaPedido}`,
-    ``,
-    `*Cliente:* ${c.nombre}`,
-    `*Teléfono:* ${c.telefono}`,
-    `*Entrega:* ${c.entrega === "retiro" ? "Retira en local" : "Envío a " + c.direccion + (c.localidad ? ", " + c.localidad : "")}`,
-    `*Fecha de entrega:* ${fechaLegible(c.fechaEntrega)} ${c.horario || ""}`.trim(),
-    `*Pago:* ${c.pago}`,
-    c.observaciones ? `*Obs.:* ${c.observaciones}` : null,
-    ``,
-    ...p.items.map((it) => `• ${it.cantidad} x ${it.nombre} — ${pesos(it.precio * it.cantidad)}`),
-    ``,
-    `*TOTAL: ${pesos(total)}*`,
-    ``,
-    `Remito para imprimir: ${link}`,
-  ].filter((l) => l !== null).join("\n");
+function mostrarConfirmado() {
+  const p = pedidoConfirmado;
+  $("#num-confirmado").textContent = numeroPedido(p.id);
+  $("#remito").innerHTML = htmlRemito(p);
+  const wa = $("#btn-whatsapp");
+  wa.hidden = !NEGOCIO.whatsapp;
+  wa.href = `https://wa.me/${NEGOCIO.whatsapp}?text=` + encodeURIComponent(
+    `Hola! Hice el pedido N° ${numeroPedido(p.id)} a nombre de ${p.nombre} por ${pesos(p.total)}.`
+  );
+  ir("remito");
 }
 
-$("#btn-enviar").addEventListener("click", () => {
-  if (!pedidoActual) return;
-  window.open(`https://wa.me/${NEGOCIO.whatsapp}?text=${encodeURIComponent(mensajeWhatsApp(pedidoActual))}`, "_blank");
-  carrito = {};
-  guardar("carrito", carrito);
-  pintarCatalogo();
-  pintarCarrito();
-  $("#gracias").hidden = false;
-});
-
-$("#btn-imprimir").addEventListener("click", () => window.print());
+$("#btn-imprimir").addEventListener("click", () => imprimirRemitos([pedidoConfirmado]));
 
 // ---------- Eventos generales ----------
 document.addEventListener("click", (e) => {
@@ -175,11 +189,9 @@ document.addEventListener("click", (e) => {
 $("#btn-carrito").addEventListener("click", () => abrirCarrito(true));
 $("#cerrar-carrito").addEventListener("click", () => abrirCarrito(false));
 $("#fondo").addEventListener("click", () => abrirCarrito(false));
-$("#btn-continuar").addEventListener("click", () => { precargarDatos(); ir("datos"); });
+$("#btn-continuar").addEventListener("click", () => { prepararDatos(); ir("datos"); });
 $("#buscar").addEventListener("input", pintarCatalogo);
 form.entrega.addEventListener("change", ajustarEntrega);
-$("#nuevo-pedido").addEventListener("click", () => { pedidoActual = null; ir("catalogo"); });
+$("#nuevo-pedido").addEventListener("click", () => { pedidoConfirmado = null; ir("catalogo"); });
 
-pintarCategorias();
-pintarCatalogo();
-pintarCarrito();
+cargarCatalogo();
