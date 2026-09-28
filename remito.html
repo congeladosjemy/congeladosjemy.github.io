@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Remito</title>
+  <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+  <main>
+    <div class="acciones no-imprimir">
+      <button class="btn primario" onclick="window.print()">🖨️ Imprimir remito</button>
+      <label class="copias">Copias en la hoja:
+        <select id="copias"><option value="1">1</option><option value="2">2 (original y duplicado)</option></select>
+      </label>
+    </div>
+    <div id="remito"></div>
+  </main>
+  <script src="productos.js"></script>
+  <script src="comun.js"></script>
+  <script>
+    const cont = document.getElementById("remito");
+    let pedido = null;
+    try { pedido = decodificarPedido(location.hash.slice(1)); } catch {}
+    function pintar() {
+      if (!pedido) { cont.innerHTML = '<p class="vacio">No se pudo leer el pedido. Verificá que el link esté completo.</p>'; return; }
+      const n = Number(document.getElementById("copias").value);
+      cont.innerHTML = Array.from({ length: n }, () => htmlRemito(pedido)).join('<hr class="corte">');
+      document.title = "Remito " + pedido.numero;
+    }
+    document.getElementById("copias").addEventListener("change", pintar);
+    pintar();
+  </script>
+</body>
+</html>
