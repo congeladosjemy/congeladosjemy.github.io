@@ -220,6 +220,21 @@ async function guardarPedido(estado, nota) {
   }
 }
 
+$("#dlg-eliminar").addEventListener("click", async () => {
+  const p = pedidoAbierto;
+  if (!confirm(`¿Eliminar para siempre el pedido N° ${numeroPedido(p.id)} de ${p.nombre}?\n\n` +
+               "Desaparece de la lista y del balance, y los productos vuelven al stock. No se puede deshacer.")) return;
+  try {
+    await api("admin_eliminar_pedido", { p_id: p.id });
+    $("#dlg-pedido").close();
+    cargarPedidos();
+    cargarResumen();
+  } catch (err) {
+    $("#dlg-error").textContent = err.message;
+    $("#dlg-error").hidden = false;
+  }
+});
+
 $("#dlg-imprimir").addEventListener("click", () =>
   imprimirRemitos([pedidoAbierto], $("#dlg-duplicado").checked ? 2 : 1));
 

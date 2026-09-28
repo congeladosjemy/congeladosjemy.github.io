@@ -26,6 +26,7 @@ body:has(.alias:not([hidden])) main { padding-bottom: 64px; }
 /* Botones */
 .btn { border: 1px solid var(--azul); background: #fff; color: var(--azul); border-radius: 8px; padding: 10px 16px; font-size: 1rem; font-weight: 600; cursor: pointer; }
 .btn.primario { background: var(--azul); color: #fff; }
+.btn.peligro { border-color: #c62828; color: #c62828; }
 .btn:disabled { opacity: .5; cursor: not-allowed; }
 .volver { background: none; border: 0; color: var(--azul); font-size: 1rem; cursor: pointer; padding: 8px 0; }
 
