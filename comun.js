@@ -80,14 +80,14 @@ function htmlRemito(p) {
 
     <section class="remito-cliente">
       <div><span>Cliente:</span> ${escapar(p.nombre)}</div>
-      <div><span>Teléfono:</span> ${escapar(p.telefono)}</div>
+      ${p.telefono ? `<div><span>Teléfono:</span> ${escapar(p.telefono)}</div>` : ""}
       ${p.entrega === "envio"
         ? `<div class="ancho"><span>Dirección:</span> ${escapar(p.direccion)}${p.localidad ? ", " + escapar(p.localidad) : ""}</div>`
         : ""}
       <div><span>Entrega:</span> ${p.entrega === "retiro" ? "Retira en local" : "Envío a domicilio"}</div>
-      <div><span>Fecha entrega:</span> ${escapar(fechaLegible(p.fecha_entrega))} ${escapar(p.horario || "")}</div>
-      <div><span>Forma de pago:</span> ${escapar(p.pago)}</div>
-      ${p.observaciones ? `<div class="ancho"><span>Observaciones:</span> ${escapar(p.observaciones)}</div>` : ""}
+      ${p.fecha_entrega ? `<div><span>Fecha entrega:</span> ${escapar(fechaLegible(p.fecha_entrega))} ${escapar(p.horario || "")}</div>` : ""}
+      ${p.pago ? `<div><span>Forma de pago:</span> ${escapar(p.pago)}</div>` : ""}
+      ${p.observaciones ? `<div class="ancho"><span>Nota:</span> ${escapar(p.observaciones)}</div>` : ""}
     </section>
 
     <table class="remito-tabla">

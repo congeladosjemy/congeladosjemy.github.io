@@ -191,6 +191,7 @@ function pintarPedidoAbierto() {
   $("#dlg-estado").innerHTML = Object.entries(ESTADOS)
     .map(([k, v]) => `<option value="${k}" ${k === p.estado ? "selected" : ""}>${v}</option>`).join("");
   $("#dlg-nota").value = p.nota_interna || "";
+  $("#dlg-whatsapp").hidden = !p.telefono;
   $("#dlg-whatsapp").href = linkWhatsApp(p.telefono, `Hola ${p.nombre}! Te escribimos de ${NEGOCIO.nombre} por tu pedido N° ${numeroPedido(p.id)}.`);
   $("#dlg-error").hidden = true;
   $("#dlg-remito").innerHTML = htmlRemito(p);
@@ -379,7 +380,7 @@ async function cargarClientes() {
         <td>${fechaHora(c.ultimo)}</td>
         <td class="botones">
           <button class="btn chico primario" data-cliente="${i}">Ver pedidos</button>
-          <a class="btn chico" target="_blank" rel="noopener" href="${linkWhatsApp(c.telefono)}">WhatsApp</a>
+          ${c.telefono ? `<a class="btn chico" target="_blank" rel="noopener" href="${linkWhatsApp(c.telefono)}">WhatsApp</a>` : ""}
         </td>
       </tr>`).join("") || `<tr><td colspan="6" class="vacio">Sin clientes todavía</td></tr>`}
     </tbody>`;
@@ -390,12 +391,12 @@ $("#tabla-clientes").addEventListener("click", (e) => {
   const b = e.target.closest("[data-cliente]");
   if (!b) return;
   const c = clientes[b.dataset.cliente];
-  filtroTelefono = c.telefono;
+  filtroTelefono = c.clave;
   $("#f-buscar").value = "";
   $("#f-desde").value = "";
   $("#f-hasta").value = "";
   $("#f-estado").disabled = true;
-  $("#filtro-cliente").innerHTML = `Mostrando todos los pedidos de <strong>${escapar(c.nombre)}</strong> (${escapar(c.telefono)}) <button class="btn chico" id="quitar-filtro">Quitar filtro</button>`;
+  $("#filtro-cliente").innerHTML = `Mostrando todos los pedidos de <strong>${escapar(c.nombre)}</strong>${c.telefono ? ` (${escapar(c.telefono)})` : ""} <button class="btn chico" id="quitar-filtro">Quitar filtro</button>`;
   $("#filtro-cliente").hidden = false;
   abrirTab("pedidos");
 });

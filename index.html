@@ -43,33 +43,9 @@
     <button class="volver" data-ir="catalogo">← Seguir comprando</button>
     <h2>Completá tus datos</h2>
     <form id="form-datos" class="formulario">
-      <label>Nombre y apellido *<input name="nombre" required maxlength="120" autocomplete="name"></label>
-      <label>Teléfono *<input name="telefono" type="tel" required maxlength="40" autocomplete="tel"></label>
-      <label>Forma de entrega *
-        <select name="entrega">
-          <option value="envio">Envío a domicilio</option>
-          <option value="retiro">Retiro en el local</option>
-        </select>
-      </label>
-      <label class="dir">Dirección *<input name="direccion" required maxlength="200" autocomplete="street-address" placeholder="Calle, número, piso/depto"></label>
-      <label class="dir">Localidad<input name="localidad" maxlength="100" autocomplete="address-level2"></label>
-      <label>Fecha de entrega *<input name="fecha_entrega" type="date" required></label>
-      <label>Horario preferido
-        <select name="horario">
-          <option value="">Indistinto</option>
-          <option>Mañana (9 a 13 h)</option>
-          <option>Tarde (13 a 18 h)</option>
-          <option>Noche (18 a 21 h)</option>
-        </select>
-      </label>
-      <label>Forma de pago *
-        <select name="pago">
-          <option>Efectivo</option>
-          <option>Transferencia</option>
-          <option>Mercado Pago</option>
-        </select>
-      </label>
-      <label class="ancho">Observaciones<textarea name="observaciones" rows="3" maxlength="500" placeholder="Timbre, referencias, aclaraciones…"></textarea></label>
+      <label class="ancho">Nombre y apellido *<input name="nombre" required maxlength="120" autocomplete="name"></label>
+      <label class="ancho">Dirección *<input name="direccion" required maxlength="200" autocomplete="street-address" placeholder="Calle, número, piso/depto, localidad"></label>
+      <label class="ancho">Nota (opcional)<textarea name="observaciones" rows="3" maxlength="500" placeholder="Dejanos una breve nota: timbre, entre calles, horario…"></textarea></label>
 
       <div class="ancho resumen-pedido">
         <h3>Resumen</h3>
@@ -95,6 +71,8 @@
   </main>
 
   <div id="zona-impresion"></div>
+
+  <button id="alias" class="alias no-imprimir" type="button" title="Tocá para copiar" hidden></button>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>

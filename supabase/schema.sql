@@ -29,7 +29,7 @@ create table if not exists pedidos (
   estado         text not null default 'nuevo'
                  check (estado in ('nuevo','preparando','enviado','entregado','cancelado')),
   nombre         text not null,
-  telefono       text not null,
+  telefono       text not null default '',  -- opcional: la tienda ya no lo pide
   entrega        text not null default 'envio' check (entrega in ('envio','retiro')),
   direccion      text,
   localidad      text,
@@ -105,6 +105,12 @@ begin
   return v_stock;
 end $$;
 
+-- Identifica a un cliente: por teléfono si lo tiene, si no por nombre
+create or replace function clave_cliente(p_telefono text, p_nombre text) returns text
+language sql immutable set search_path = public as $$
+  select coalesce(nullif(trim(p_telefono), ''), 'nombre:' || lower(trim(p_nombre)));
+$$;
+
 create or replace function pedido_json(p_id bigint) returns jsonb
 language sql stable security definer set search_path = public as $$
   select to_jsonb(p) || jsonb_build_object(
@@ -138,8 +144,8 @@ declare
   v_prod  productos%rowtype;
   v_faltan text[] := '{}';
 begin
-  if coalesce(trim(p_cliente ->> 'nombre'), '') = '' or coalesce(trim(p_cliente ->> 'telefono'), '') = '' then
-    raise exception 'Faltan nombre o teléfono';
+  if coalesce(trim(p_cliente ->> 'nombre'), '') = '' or coalesce(trim(p_cliente ->> 'direccion'), '') = '' then
+    raise exception 'Faltan nombre o dirección';
   end if;
   if jsonb_typeof(p_items) <> 'array' or jsonb_array_length(p_items) = 0 then
     raise exception 'El pedido está vacío';
@@ -175,7 +181,7 @@ begin
   insert into pedidos (nombre, telefono, entrega, direccion, localidad, fecha_entrega, horario, pago, observaciones)
   values (
     left(trim(p_cliente ->> 'nombre'), 120),
-    left(trim(p_cliente ->> 'telefono'), 40),
+    coalesce(left(trim(p_cliente ->> 'telefono'), 40), ''),
     case when p_cliente ->> 'entrega' = 'retiro' then 'retiro' else 'envio' end,
     left(p_cliente ->> 'direccion', 200),
     left(p_cliente ->> 'localidad', 100),
@@ -217,7 +223,7 @@ begin
       and (p_hasta is null or (p.creado at time zone 'America/Argentina/Buenos_Aires')::date <= p_hasta)
       and (coalesce(p_estado, '') = '' or p.estado = p_estado
            or (p_estado = 'pendientes' and p.estado in ('nuevo','preparando','enviado')))
-      and (coalesce(p_telefono, '') = '' or p.telefono = p_telefono)
+      and (coalesce(p_telefono, '') = '' or clave_cliente(p.telefono, p.nombre) = p_telefono)
       and (coalesce(p_buscar, '') = ''
            or p.nombre ilike '%' || p_buscar || '%'
            or p.telefono ilike '%' || p_buscar || '%'
@@ -323,14 +329,15 @@ begin
     join productos pr on pr.id = m.producto_id), '[]'::jsonb);
 end $$;
 
--- Clientes: se agrupan por teléfono
+-- Clientes: se agrupan por teléfono (o por nombre, si el pedido no tiene teléfono)
 create or replace function admin_clientes(p_buscar text default null) returns jsonb
 language plpgsql stable security definer set search_path = public as $$
 begin
   perform exigir_admin();
   return coalesce((
     select jsonb_agg(c order by c.ultimo desc) from (
-      select telefono,
+      select clave_cliente(telefono, nombre) as clave,
+             max(telefono) as telefono,
              (array_agg(nombre order by creado desc))[1]    as nombre,
              (array_agg(direccion order by creado desc) filter (where entrega = 'envio'))[1] as direccion,
              (array_agg(localidad order by creado desc) filter (where entrega = 'envio'))[1] as localidad,
@@ -338,10 +345,10 @@ begin
              coalesce(sum(total) filter (where estado <> 'cancelado'), 0) as gastado,
              max(creado) as ultimo
       from pedidos
-      group by telefono
+      group by 1
       having coalesce(p_buscar, '') = ''
           or bool_or(nombre ilike '%' || p_buscar || '%')
-          or telefono ilike '%' || p_buscar || '%'
+          or bool_or(telefono ilike '%' || p_buscar || '%')
     ) c), '[]'::jsonb);
 end $$;
 

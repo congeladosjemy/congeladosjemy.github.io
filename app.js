@@ -16,6 +16,19 @@ const producto = (id) => productos.find((p) => String(p.id) === String(id));
 document.title = NEGOCIO.nombre + " · Hacé tu pedido";
 $("#titulo").textContent = NEGOCIO.nombre;
 
+// Alias para transferencias, abajo a la izquierda. Al tocarlo se copia.
+const alias = $("#alias");
+if (NEGOCIO.alias) {
+  const mostrarAlias = () => (alias.innerHTML = `Alias: <strong>${escapar(NEGOCIO.alias)}</strong>`);
+  mostrarAlias();
+  alias.hidden = false;
+  alias.addEventListener("click", async () => {
+    try { await navigator.clipboard.writeText(NEGOCIO.alias); } catch { return; }
+    alias.textContent = "¡Alias copiado!";
+    setTimeout(mostrarAlias, 1500);
+  });
+}
+
 // ---------- Catálogo ----------
 async function cargarCatalogo() {
   try {
@@ -117,17 +130,9 @@ function ir(vista) {
 // ---------- Formulario ----------
 const form = $("#form-datos");
 
-function ajustarEntrega() {
-  const retiro = form.entrega.value === "retiro";
-  $$(".dir").forEach((el) => (el.hidden = retiro));
-  form.direccion.required = !retiro;
-}
-
 function prepararDatos() {
   const d = cargar("cliente", {});
-  for (const [k, v] of Object.entries(d)) if (form[k] && k !== "fecha_entrega") form[k].value = v;
-  form.fecha_entrega.min = hoyISO();
-  ajustarEntrega();
+  for (const k of ["nombre", "direccion"]) if (d[k]) form[k].value = d[k];
   $("#resumen-items").innerHTML =
     itemsCarrito().map((it) => `<div class="fila-resumen"><span>${it.cantidad} × ${escapar(it.nombre)}</span><span>${pesos(it.precio * it.cantidad)}</span></div>`).join("") +
     `<div class="fila-resumen total"><span>Total</span><span>${pesos(totalCarrito())}</span></div>`;
@@ -136,9 +141,8 @@ function prepararDatos() {
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
-  const cliente = Object.fromEntries(new FormData(form));
-  if (cliente.entrega === "retiro") { cliente.direccion = ""; cliente.localidad = ""; }
-  guardar("cliente", cliente);
+  const cliente = { ...Object.fromEntries(new FormData(form)), entrega: "envio" };
+  guardar("cliente", { nombre: cliente.nombre, direccion: cliente.direccion });
 
   const boton = $("#btn-confirmar");
   boton.disabled = true;
@@ -191,7 +195,6 @@ $("#cerrar-carrito").addEventListener("click", () => abrirCarrito(false));
 $("#fondo").addEventListener("click", () => abrirCarrito(false));
 $("#btn-continuar").addEventListener("click", () => { prepararDatos(); ir("datos"); });
 $("#buscar").addEventListener("input", pintarCatalogo);
-form.entrega.addEventListener("change", ajustarEntrega);
 $("#nuevo-pedido").addEventListener("click", () => { pedidoConfirmado = null; ir("catalogo"); });
 
 cargarCatalogo();

@@ -14,4 +14,6 @@ const NEGOCIO = {
   // WhatsApp del negocio 5491133528392.
   // Si lo dejás vacío, no se muestra el botón "Avisar por WhatsApp".
   whatsapp: "5491133528392",
+  // Alias para transferencias (se muestra abajo a la izquierda de la tienda).
+  alias: "congeladosjemy",
 };
