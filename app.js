@@ -179,15 +179,26 @@ form.addEventListener("submit", async (e) => {
   }
 });
 
+// Mensaje de WhatsApp con el detalle completo del pedido
+function mensajePedido(p) {
+  return [
+    `Hola! Hice el pedido N° ${numeroPedido(p.id)} en ${NEGOCIO.nombre}.`,
+    "",
+    ...p.items.map((it) => `• ${it.cantidad} × ${it.nombre} (${pesos(it.precio * it.cantidad)})`),
+    `Total: ${pesos(p.total)}`,
+    "",
+    `Nombre: ${p.nombre}`,
+    p.entrega === "retiro" ? "Entrega: retiro en el local" : `Entrega: envío a ${p.direccion}`,
+    p.observaciones ? `Nota: ${p.observaciones}` : "",
+  ].filter((l, i, a) => l || a[i - 1]).join("\n").trim();
+}
+
 function mostrarConfirmado() {
   const p = pedidoConfirmado;
   $("#num-confirmado").textContent = numeroPedido(p.id);
   $("#remito").innerHTML = htmlRemito(p);
-  const wa = $("#btn-whatsapp");
-  wa.hidden = !NEGOCIO.whatsapp;
-  wa.href = `https://wa.me/${NEGOCIO.whatsapp}?text=` + encodeURIComponent(
-    `Hola! Hice el pedido N° ${numeroPedido(p.id)} a nombre de ${p.nombre} por ${pesos(p.total)}.`
-  );
+  $("#paso-whatsapp").hidden = !NEGOCIO.whatsapp;
+  $("#btn-whatsapp").href = `https://wa.me/${NEGOCIO.whatsapp}?text=` + encodeURIComponent(mensajePedido(p));
   ir("remito");
 }
 

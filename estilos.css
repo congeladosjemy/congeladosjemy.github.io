@@ -108,6 +108,9 @@ body:has(.alias:not([hidden])) main { padding-bottom: 64px; }
 .fila-resumen.total { border-top: 1px solid var(--borde); margin-top: 6px; padding-top: 8px; font-weight: 700; font-size: 1.1rem; }
 .error { color: #b91c1c; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 10px; margin: 0; }
 .confirmado { text-align: center; background: #fff; border: 1px solid var(--borde); border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+.paso-whatsapp { margin: 14px 0 4px; padding: 14px; border-radius: 12px; background: #e9f9ef; }
+.paso-whatsapp p { margin: 0 0 10px; }
+.btn-wa { display: inline-block; background: #25d366; color: #fff; border-color: #25d366; font-size: 1.1rem; padding: 12px 20px; text-decoration: none; }
 .confirmado .acciones { justify-content: center; margin: 12px 0 0; }
 a.btn { text-decoration: none; display: inline-block; }
 

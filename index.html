@@ -67,10 +67,13 @@
   <main id="vista-remito" hidden>
     <div class="confirmado no-imprimir">
       <h2>✅ ¡Pedido recibido!</h2>
-      <p>Tu número de pedido es <strong id="num-confirmado"></strong>. Te vamos a contactar para confirmar la entrega.</p>
+      <p>Tu número de pedido es <strong id="num-confirmado"></strong>.</p>
+      <div id="paso-whatsapp" class="paso-whatsapp">
+        <p><strong>Último paso:</strong> envianos el pedido por WhatsApp para que podamos confirmarlo.</p>
+        <a id="btn-whatsapp" class="btn btn-wa" target="_blank" rel="noopener">📲 Enviar pedido por WhatsApp</a>
+      </div>
       <div class="acciones">
         <button id="btn-imprimir" class="btn">🖨️ Imprimir / Guardar PDF</button>
-        <a id="btn-whatsapp" class="btn primario" target="_blank" rel="noopener">📲 Avisar por WhatsApp</a>
         <button class="btn" id="nuevo-pedido">Hacer otro pedido</button>
       </div>
     </div>
