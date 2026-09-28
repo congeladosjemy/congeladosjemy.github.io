@@ -86,16 +86,43 @@
   <!-- Detalle de pedido -->
   <dialog id="dlg-pedido" class="dialogo ancho-grande">
     <div class="dlg-cab"><h2 id="dlg-pedido-titulo">Pedido</h2><button class="x" data-cerrar>✕</button></div>
-    <div class="acciones">
+    <div class="acciones" id="dlg-acciones">
       <label>Estado <select id="dlg-estado"></select></label>
+      <button id="dlg-editar" class="btn primario">✏️ Editar pedido</button>
       <button id="dlg-imprimir" class="btn">🖨️ Imprimir</button>
       <label class="check"><input id="dlg-duplicado" type="checkbox"> Con duplicado</label>
       <a id="dlg-whatsapp" class="btn" target="_blank" rel="noopener">📲 WhatsApp al cliente</a>
       <button id="dlg-eliminar" class="btn peligro">🗑️ Eliminar pedido</button>
     </div>
-    <label class="nota">Nota interna (no la ve el cliente)
+    <label class="nota" id="dlg-nota-label">Nota interna (no la ve el cliente)
       <textarea id="dlg-nota" rows="2"></textarea>
     </label>
+    <div id="dlg-editor" class="editor" hidden>
+      <div class="formulario">
+        <label>Nombre *<input id="ed-nombre" maxlength="120"></label>
+        <label>Entrega
+          <select id="ed-entrega">
+            <option value="envio">Envío a domicilio</option>
+            <option value="retiro">Retiro en el local</option>
+          </select>
+        </label>
+        <label class="ancho" id="ed-dir-label">Dirección *<input id="ed-direccion" maxlength="200"></label>
+        <label class="ancho">Nota del cliente<textarea id="ed-nota" rows="2" maxlength="500"></textarea></label>
+      </div>
+      <p class="ayuda">Podés cambiar la cantidad y también el precio de cada producto (por ejemplo, para un cliente especial). El precio de la tienda no cambia.</p>
+      <div class="tabla-scroll"><table class="tabla" id="ed-items"></table></div>
+      <div class="ed-agregar">
+        <input id="ed-buscar" list="ed-productos" placeholder="Escribí para buscar un producto y agregarlo…">
+        <datalist id="ed-productos"></datalist>
+        <input id="ed-cant" type="number" min="1" max="1000" value="1" aria-label="Cantidad">
+        <button id="ed-agregar" class="btn">+ Agregar</button>
+      </div>
+      <p class="ed-total">Total: <strong id="ed-total"></strong></p>
+      <div class="acciones">
+        <button id="ed-guardar" class="btn primario">Guardar cambios</button>
+        <button id="ed-cancelar" class="btn">Cancelar</button>
+      </div>
+    </div>
     <p id="dlg-error" class="error" hidden></p>
     <div id="dlg-remito"></div>
   </dialog>

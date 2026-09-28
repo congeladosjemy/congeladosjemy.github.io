@@ -235,10 +235,128 @@ $("#dlg-eliminar").addEventListener("click", async () => {
   }
 });
 
+// ---------- Editar pedido ----------
+let edItems = [];
+
+function modoEdicion(activo) {
+  $("#dlg-editor").hidden = !activo;
+  $("#dlg-acciones").hidden = activo;
+  $("#dlg-nota-label").hidden = activo;
+  $("#dlg-remito").hidden = activo;
+  $("#dlg-error").hidden = true;
+}
+
+$("#dlg-editar").addEventListener("click", async () => {
+  const p = pedidoAbierto;
+  if (!productosAdmin.length) {
+    try { productosAdmin = await api("admin_productos"); }
+    catch (err) { $("#dlg-error").textContent = err.message; $("#dlg-error").hidden = false; return; }
+  }
+  $("#ed-productos").innerHTML = productosAdmin
+    .map((x) => `<option value="${escapar(x.nombre)}">${pesos(x.precio)} · stock ${x.stock}${x.activo ? "" : " · oculto"}</option>`).join("");
+  $("#ed-nombre").value = p.nombre;
+  $("#ed-entrega").value = p.entrega;
+  $("#ed-direccion").value = p.direccion || "";
+  $("#ed-nota").value = p.observaciones || "";
+  edItems = p.items.map((it) => ({ ...it }));
+  ajustarEntregaEditor();
+  pintarEditor();
+  modoEdicion(true);
+});
+
+function ajustarEntregaEditor() {
+  $("#ed-dir-label").hidden = $("#ed-entrega").value === "retiro";
+}
+$("#ed-entrega").addEventListener("change", ajustarEntregaEditor);
+
+function pintarEditor() {
+  $("#ed-items").innerHTML = `
+    <thead><tr><th>Producto</th><th class="num">Precio</th><th class="num">Cantidad</th><th class="num">Subtotal</th><th></th></tr></thead>
+    <tbody>${edItems.map((it, i) => `
+      <tr>
+        <td>${escapar(it.nombre)}</td>
+        <td class="num"><input class="ed-precio" type="number" min="0" step="1" value="${Number(it.precio)}" data-i="${i}" aria-label="Precio"></td>
+        <td class="num"><input class="ed-cantidad" type="number" min="1" max="1000" value="${it.cantidad}" data-i="${i}" aria-label="Cantidad"></td>
+        <td class="num">${pesos(it.precio * it.cantidad)}</td>
+        <td><button class="btn chico peligro" data-quitar="${i}" title="Quitar">✕</button></td>
+      </tr>`).join("") || `<tr><td colspan="5" class="vacio">Sin productos</td></tr>`}
+    </tbody>`;
+  $("#ed-total").textContent = pesos(edItems.reduce((s, it) => s + it.precio * it.cantidad, 0));
+}
+
+$("#ed-items").addEventListener("change", (e) => {
+  const it = edItems[e.target.dataset.i];
+  if (e.target.matches(".ed-cantidad")) {
+    const n = Math.round(Number(e.target.value));
+    it.cantidad = n >= 1 ? Math.min(n, 1000) : 1;
+  } else if (e.target.matches(".ed-precio")) {
+    const n = Number(e.target.value);
+    if (e.target.value !== "" && n >= 0) it.precio = n;
+  } else return;
+  pintarEditor();
+});
+$("#ed-items").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-quitar]");
+  if (!b) return;
+  edItems.splice(Number(b.dataset.quitar), 1);
+  pintarEditor();
+});
+
+function agregarAlPedido() {
+  const nombre = $("#ed-buscar").value.trim();
+  const prod = productosAdmin.find((x) => x.nombre === nombre);
+  if (!prod) {
+    $("#dlg-error").textContent = "Elegí un producto de la lista que aparece al escribir.";
+    $("#dlg-error").hidden = false;
+    return;
+  }
+  const cant = Math.max(1, Math.min(1000, Math.round(Number($("#ed-cant").value)) || 1));
+  const ya = edItems.find((it) => String(it.producto_id) === String(prod.id));
+  if (ya) ya.cantidad = Math.min(1000, ya.cantidad + cant);
+  else edItems.push({ producto_id: prod.id, nombre: prod.nombre, precio: prod.precio, cantidad: cant });
+  $("#ed-buscar").value = "";
+  $("#ed-cant").value = 1;
+  $("#dlg-error").hidden = true;
+  pintarEditor();
+}
+$("#ed-agregar").addEventListener("click", agregarAlPedido);
+$("#ed-buscar").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); agregarAlPedido(); } });
+
+$("#ed-cancelar").addEventListener("click", () => modoEdicion(false));
+
+$("#ed-guardar").addEventListener("click", async () => {
+  const boton = $("#ed-guardar");
+  boton.disabled = true;
+  try {
+    pedidoAbierto = await api("admin_editar_pedido", {
+      p_id: pedidoAbierto.id,
+      p_cliente: {
+        nombre: $("#ed-nombre").value,
+        entrega: $("#ed-entrega").value,
+        direccion: $("#ed-direccion").value,
+        observaciones: $("#ed-nota").value,
+      },
+      p_items: edItems.map((it) => it.producto_id
+        ? { producto_id: it.producto_id, cantidad: it.cantidad, precio: it.precio }
+        : { item_id: it.id, cantidad: it.cantidad, precio: it.precio }),
+    });
+    modoEdicion(false);
+    pintarPedidoAbierto();
+    cargarPedidos();
+    productosAdmin = []; // el stock cambió: se vuelve a leer la próxima vez
+  } catch (err) {
+    $("#dlg-error").textContent = "No se pudo guardar: " + err.message;
+    $("#dlg-error").hidden = false;
+  } finally {
+    boton.disabled = false;
+  }
+});
+
 $("#dlg-imprimir").addEventListener("click", () =>
   imprimirRemitos([pedidoAbierto], $("#dlg-duplicado").checked ? 2 : 1));
 
 $("#dlg-pedido").addEventListener("close", () => {
+  modoEdicion(false);
   if (location.hash) history.replaceState(null, "", location.pathname);
 });
 

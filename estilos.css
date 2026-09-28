@@ -26,6 +26,15 @@ body:has(.alias:not([hidden])) main { padding-bottom: 64px; }
 /* Botones */
 .btn { border: 1px solid var(--azul); background: #fff; color: var(--azul); border-radius: 8px; padding: 10px 16px; font-size: 1rem; font-weight: 600; cursor: pointer; }
 .btn.primario { background: var(--azul); color: #fff; }
+.editor { margin-top: 4px; }
+.editor .formulario { margin-bottom: 12px; }
+.ed-precio { width: 110px; padding: 6px 8px; border: 1px solid var(--borde); border-radius: 8px; font: inherit; text-align: right; }
+.editor .ayuda { margin: 0 0 8px; font-size: .9rem; color: var(--gris); }
+.ed-cantidad { width: 72px; padding: 6px 8px; border: 1px solid var(--borde); border-radius: 8px; font: inherit; text-align: right; }
+.ed-agregar { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.ed-agregar #ed-buscar { flex: 1; min-width: 220px; padding: 9px 10px; border: 1px solid var(--borde); border-radius: 8px; font: inherit; }
+.ed-agregar #ed-cant { width: 80px; padding: 9px 10px; border: 1px solid var(--borde); border-radius: 8px; font: inherit; }
+.ed-total { font-size: 1.1rem; text-align: right; margin: 0 0 8px; }
 .btn.peligro { border-color: #c62828; color: #c62828; }
 .btn:disabled { opacity: .5; cursor: not-allowed; }
 .volver { background: none; border: 0; color: var(--azul); font-size: 1rem; cursor: pointer; padding: 8px 0; }
