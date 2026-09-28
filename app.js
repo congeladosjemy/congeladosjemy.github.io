@@ -130,9 +130,20 @@ function ir(vista) {
 // ---------- Formulario ----------
 const form = $("#form-datos");
 
+function ajustarEntrega() {
+  const retiro = form.entrega.value === "retiro";
+  $$(".dir").forEach((el) => (el.hidden = retiro));
+  form.direccion.required = !retiro;
+  const local = NEGOCIO.direccion && NEGOCIO.direccion !== "-" ? NEGOCIO.direccion : "";
+  $("#aviso-retiro").textContent = local ? `Retirás por: ${local}` : "";
+  $("#aviso-retiro").hidden = !retiro || !local;
+}
+form.entrega.addEventListener("change", ajustarEntrega);
+
 function prepararDatos() {
   const d = cargar("cliente", {});
-  for (const k of ["nombre", "direccion"]) if (d[k]) form[k].value = d[k];
+  for (const k of ["nombre", "direccion", "entrega"]) if (d[k]) form[k].value = d[k];
+  ajustarEntrega();
   $("#resumen-items").innerHTML =
     itemsCarrito().map((it) => `<div class="fila-resumen"><span>${it.cantidad} × ${escapar(it.nombre)}</span><span>${pesos(it.precio * it.cantidad)}</span></div>`).join("") +
     `<div class="fila-resumen total"><span>Total</span><span>${pesos(totalCarrito())}</span></div>`;
@@ -141,8 +152,9 @@ function prepararDatos() {
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
-  const cliente = { ...Object.fromEntries(new FormData(form)), entrega: "envio" };
-  guardar("cliente", { nombre: cliente.nombre, direccion: cliente.direccion });
+  const cliente = Object.fromEntries(new FormData(form));
+  if (cliente.entrega === "retiro") cliente.direccion = "";
+  guardar("cliente", { nombre: cliente.nombre, direccion: cliente.direccion, entrega: cliente.entrega });
 
   const boton = $("#btn-confirmar");
   boton.disabled = true;

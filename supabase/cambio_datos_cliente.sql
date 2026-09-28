@@ -1,4 +1,5 @@
--- Congelados JEMY: la tienda ya no pide teléfono, fecha de entrega ni forma de pago.
+-- Congelados JEMY: la tienda pide sólo nombre, dirección (si es envío) y una nota.
+-- El teléfono pasa a ser opcional y se puede elegir "Retiro en el local".
 -- Pegá TODO este texto en Supabase → SQL Editor y apretá Run. Se puede ejecutar más de una vez sin problema.
 
 alter table pedidos alter column telefono set default '';
@@ -20,8 +21,11 @@ declare
   v_prod  productos%rowtype;
   v_faltan text[] := '{}';
 begin
-  if coalesce(trim(p_cliente ->> 'nombre'), '') = '' or coalesce(trim(p_cliente ->> 'direccion'), '') = '' then
-    raise exception 'Faltan nombre o dirección';
+  if coalesce(trim(p_cliente ->> 'nombre'), '') = '' then
+    raise exception 'Falta el nombre';
+  end if;
+  if coalesce(p_cliente ->> 'entrega', '') <> 'retiro' and coalesce(trim(p_cliente ->> 'direccion'), '') = '' then
+    raise exception 'Falta la dirección de entrega';
   end if;
   if jsonb_typeof(p_items) <> 'array' or jsonb_array_length(p_items) = 0 then
     raise exception 'El pedido está vacío';

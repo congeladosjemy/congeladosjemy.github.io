@@ -44,7 +44,14 @@
     <h2>Completá tus datos</h2>
     <form id="form-datos" class="formulario">
       <label class="ancho">Nombre y apellido *<input name="nombre" required maxlength="120" autocomplete="name"></label>
-      <label class="ancho">Dirección *<input name="direccion" required maxlength="200" autocomplete="street-address" placeholder="Calle, número, piso/depto, localidad"></label>
+      <label class="ancho">¿Cómo lo recibís? *
+        <select name="entrega">
+          <option value="envio">Envío a domicilio</option>
+          <option value="retiro">Retiro en el local</option>
+        </select>
+      </label>
+      <p id="aviso-retiro" class="ancho aviso-retiro" hidden></p>
+      <label class="ancho dir">Dirección *<input name="direccion" required maxlength="200" autocomplete="street-address" placeholder="Calle, número, piso/depto, localidad"></label>
       <label class="ancho">Nota (opcional)<textarea name="observaciones" rows="3" maxlength="500" placeholder="Dejanos una breve nota: timbre, entre calles, horario…"></textarea></label>
 
       <div class="ancho resumen-pedido">

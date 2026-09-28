@@ -144,8 +144,11 @@ declare
   v_prod  productos%rowtype;
   v_faltan text[] := '{}';
 begin
-  if coalesce(trim(p_cliente ->> 'nombre'), '') = '' or coalesce(trim(p_cliente ->> 'direccion'), '') = '' then
-    raise exception 'Faltan nombre o dirección';
+  if coalesce(trim(p_cliente ->> 'nombre'), '') = '' then
+    raise exception 'Falta el nombre';
+  end if;
+  if coalesce(p_cliente ->> 'entrega', '') <> 'retiro' and coalesce(trim(p_cliente ->> 'direccion'), '') = '' then
+    raise exception 'Falta la dirección de entrega';
   end if;
   if jsonb_typeof(p_items) <> 'array' or jsonb_array_length(p_items) = 0 then
     raise exception 'El pedido está vacío';
